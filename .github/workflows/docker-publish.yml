@@ -1,0 +1,108 @@
+name: Docker Publish
+
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - 'Dockerfile'
+      - 'ADMINER-LICENSE'
+      - 'README.md'
+      - 'README.dockerhub.md'
+      - 'LICENSE'
+  workflow_dispatch:
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    if: github.repository == 'morsalin1342/adminer-docker'
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
+      - name: Extract the Adminer version from the Dockerfile
+        id: get_version
+        run: |
+          VERSION=$(grep -oP '^ARG ADMINER_VERSION=\K[0-9]+\.[0-9]+\.[0-9]+' Dockerfile | head -n 1)
+          if [ -z "$VERSION" ]; then
+            echo "Could not extract the version from the Dockerfile."
+            exit 1
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and push the Docker image
+        id: build-and-push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: |
+            morsalin1342/adminer:${{ steps.get_version.outputs.version }}
+            morsalin1342/adminer:latest
+            easydigital/adminer:${{ steps.get_version.outputs.version }}
+            easydigital/adminer:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # After the push, a fixable critical vulnerability fails the run, and an SPDX SBOM is kept
+      # as a workflow artifact. SitesPanel's image manifest scans again before it lists the image.
+      - name: Scan the pushed image for fixable critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: easydigital/adminer:${{ steps.get_version.outputs.version }}
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Write the SBOM
+        if: always()
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: easydigital/adminer:${{ steps.get_version.outputs.version }}
+          format: spdx-json
+          output: sbom.spdx.json
+          exit-code: '0'
+
+      - name: Keep the SBOM
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-adminer-${{ steps.get_version.outputs.version }}
+          path: sbom.spdx.json
+
+  update_readme:
+    needs: build_and_publish
+    runs-on: ubuntu-latest
+    if: github.repository == 'morsalin1342/adminer-docker'
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v7
+
+      - name: Update the Docker Hub description (personal repo)
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: morsalin1342/adminer
+          readme-filepath: ./README.dockerhub.md
+          short-description: 'Adminer database tool: the official image with Alpine security updates'
+
+      - name: Update the Docker Hub description (org repo)
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: easydigital/adminer
+          readme-filepath: ./README.dockerhub.md
+          short-description: 'Adminer database tool: the official image with Alpine security updates'
