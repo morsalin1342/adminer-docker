@@ -25,7 +25,7 @@ COPY ADMINER-LICENSE /licenses/adminer-LICENSE
 # ones; the SBOM each build keeps lists every package), and no single SPDX expression
 # has been derived for all of it. The base image sets no licences label today; the
 # empty value keeps it that way if one is added.
-LABEL org.opencontainers.image.title="Adminer" \
+LABEL org.opencontainers.image.title="adminer" \
       org.opencontainers.image.description="Adminer database tool, the official image with Alpine security updates" \
       org.opencontainers.image.version="${ADMINER_VERSION}" \
       org.opencontainers.image.licenses="" \
