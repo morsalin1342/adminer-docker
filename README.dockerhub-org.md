@@ -34,6 +34,6 @@ The [Licence section](https://github.com/morsalin1342/adminer-docker#licence) sa
 | [easydigital/frankenphp](https://hub.docker.com/r/easydigital/frankenphp) | Caddy + PHP app server in one container |
 | [easydigital/php](https://hub.docker.com/r/easydigital/php) | Traditional PHP-FPM & CLI images |
 | [easydigital/nginx](https://hub.docker.com/r/easydigital/nginx) | nginx with ModSecurity 3, Brotli, zstd & GeoIP2 |
-| [easydigital/apache](https://hub.docker.com/r/easydigital/apache) | Apache as a static server or php-fpm application server, no PHP inside |
+| [easydigital/apache](https://hub.docker.com/r/easydigital/apache) | Apache httpd as a static server or php-fpm application server, no PHP inside |
 | [morsalin1342/adminer](https://hub.docker.com/r/morsalin1342/adminer) | Same image, personal namespace |
 <!-- END GENERATED: related -->
