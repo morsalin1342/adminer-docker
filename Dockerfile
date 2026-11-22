@@ -3,9 +3,9 @@
 # The official image is pinned by tag and digest, so a rebuild never changes what it is built
 # on. To move forward: bump ADMINER_VERSION and the digest together
 # (docker buildx imagetools inspect adminer:<version>-standalone).
-ARG ADMINER_VERSION=6.1.2
+ARG ADMINER_VERSION=6.3.0
 
-FROM adminer:${ADMINER_VERSION}-standalone@sha256:251295c1cd51d3889f1c42ffa4864b24eeab51f0caf395cfe5bf4726c5ec9a2a
+FROM adminer:${ADMINER_VERSION}-standalone@sha256:037125c2bc4836b4917d4fd08a16f817eac2848778c4e9aab87a8340aef08dfd
 
 ARG ADMINER_VERSION
 
@@ -17,7 +17,7 @@ USER root
 # PHP and the entrypoint stay as the official image ships them.
 RUN apk upgrade --no-cache
 
-# Adminer is "Apache License 2.0 or GPL 2.0" (its LICENSE file, v6.1.2). The image carries it.
+# Adminer is "Apache License 2.0 or GPL 2.0" (its LICENSE file, v6.3.0). The image carries it.
 COPY ADMINER-LICENSE /licenses/adminer-LICENSE
 
 LABEL org.opencontainers.image.title="Adminer" \

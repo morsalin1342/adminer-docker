@@ -6,8 +6,8 @@
 image plus Alpine's security updates.
 
 ```bash
-docker pull easydigital/adminer:6.1.2
-docker run --rm -p 127.0.0.1:8080:8080 easydigital/adminer:6.1.2
+docker pull easydigital/adminer:6.3.0
+docker run --rm -p 127.0.0.1:8080:8080 easydigital/adminer:6.3.0
 ```
 
 ## What this is, and what it is not
@@ -28,7 +28,7 @@ no fixed release, and SitesPanel needs a database tool whose image passes its vu
 
 | Tag | Adminer | Base |
 |---|---|---|
-| `6.1.2`, `latest` | 6.1.2 | `adminer:6.1.2-standalone` |
+| `6.3.0`, `latest` | 6.3.0 | `adminer:6.3.0-standalone` |
 
 ## Licence
 
