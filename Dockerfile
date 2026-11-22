@@ -20,10 +20,15 @@ RUN apk upgrade --no-cache
 # Adminer is "Apache License 2.0 or GPL 2.0" (its LICENSE file, v6.3.0). The image carries it.
 COPY ADMINER-LICENSE /licenses/adminer-LICENSE
 
+# licenses is empty on purpose. The repository's own files are MIT, but the image
+# combines software under many licences (the README's Licence section names the main
+# ones; the SBOM each build keeps lists every package), and no single SPDX expression
+# has been derived for all of it. The base image sets no licences label today; the
+# empty value keeps it that way if one is added.
 LABEL org.opencontainers.image.title="Adminer" \
       org.opencontainers.image.description="Adminer database tool, the official image with Alpine security updates" \
       org.opencontainers.image.version="${ADMINER_VERSION}" \
-      org.opencontainers.image.licenses="Apache-2.0 OR GPL-2.0-only" \
+      org.opencontainers.image.licenses="" \
       org.opencontainers.image.source="https://github.com/morsalin1342/adminer-docker" \
       org.opencontainers.image.base.name="docker.io/library/adminer:${ADMINER_VERSION}-standalone"
 
