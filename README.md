@@ -24,9 +24,8 @@ for the base packages are in the image without waiting for the next official rel
 - It does not sign anyone in or restrict who can reach it. Put it behind something that does,
   and never publish port 8080 to the internet.
 
-It is for anyone who wants a web database tool whose image passes a vulnerability scan with no
-fixable critical findings. The phpMyAdmin image ships a bundled copy of Twig with critical
-findings and no fixed release, so it does not.
+Each build is scanned with Trivy before it is pushed, and a fixable critical or high finding
+stops the push (see [Publishing](#publishing)).
 
 ## Versions
 
@@ -37,7 +36,8 @@ findings and no fixed release, so it does not.
 ## Publishing
 
 A push to `master` that changes the Dockerfile, and a weekly scheduled run, build the image and
-scan it with Trivy. A fixable critical vulnerability stops the run before anything is pushed;
+scan it with Trivy. A fixable critical or high vulnerability stops the run before anything is
+pushed (a waiver, with its reason and expiry date, goes in [.trivyignore](.trivyignore));
 otherwise the image is pushed to `morsalin1342/adminer` and `easydigital/adminer` and an SPDX
 SBOM is kept as a workflow artifact. A pull request builds and scans but never pushes. See
 [SECURITY.md](SECURITY.md) for reporting a vulnerability.

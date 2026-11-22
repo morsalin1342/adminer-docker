@@ -5,6 +5,7 @@ on:
     branches: [ "master" ]
     paths:
       - 'Dockerfile'
+      - '.trivyignore'
       - 'ADMINER-LICENSE'
       - 'README.md'
       - 'README.dockerhub.md'
@@ -14,6 +15,7 @@ on:
   pull_request:
     paths:
       - 'Dockerfile'
+      - '.trivyignore'
       - 'ADMINER-LICENSE'
       - '.github/workflows/docker-publish.yml'
   # Weekly rebuild, so Alpine security updates and a moved base image reach the
@@ -68,14 +70,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # A fixable critical vulnerability fails the run before anything is pushed.
-      - name: Scan the image for fixable critical vulnerabilities
+      # A fixable critical or high vulnerability fails the run before anything is
+      # pushed. Waivers, each with a reason and an expiry date, go in .trivyignore.
+      - name: Scan the image for fixable critical and high vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: local/adminer:scan
           format: table
-          severity: CRITICAL
+          severity: CRITICAL,HIGH
           ignore-unfixed: true
+          trivyignores: .trivyignore
           exit-code: '1'
 
       - name: Write the SBOM
