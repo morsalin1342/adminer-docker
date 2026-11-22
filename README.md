@@ -1,14 +1,17 @@
 # Adminer Docker Image
 
 [![License](https://img.shields.io/github/license/morsalin1342/adminer-docker?style=for-the-badge)](https://github.com/morsalin1342/adminer-docker/blob/master/LICENSE)
+[![Docker Publish](https://github.com/morsalin1342/adminer-docker/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/morsalin1342/adminer-docker/actions/workflows/docker-publish.yml)
 
 [Adminer](https://www.adminer.org/), the single-file database tool, as the official `adminer`
 image plus Alpine's security updates.
 
 ```bash
-docker pull easydigital/adminer:6.3.0
-docker run --rm -p 127.0.0.1:8080:8080 easydigital/adminer:6.3.0
+docker pull morsalin1342/adminer:6.3.0
+docker run --rm -p 127.0.0.1:8080:8080 morsalin1342/adminer:6.3.0
 ```
+
+**Platform:** linux/amd64 only. `morsalin1342/adminer` and `easydigital/adminer` are the same image, pushed by the same build with the same digest; pull whichever you prefer.
 
 ## What this is, and what it is not
 
@@ -21,8 +24,9 @@ for the base packages are in the image without waiting for the next official rel
 - It does not sign anyone in or restrict who can reach it. Put it behind something that does,
   and never publish port 8080 to the internet.
 
-It exists because the phpMyAdmin image ships a bundled copy of Twig with critical findings and
-no fixed release, and SitesPanel needs a database tool whose image passes its vulnerability scan.
+It is for anyone who wants a web database tool whose image passes a vulnerability scan with no
+fixable critical findings. The phpMyAdmin image ships a bundled copy of Twig with critical
+findings and no fixed release, so it does not.
 
 ## Versions
 
@@ -30,14 +34,38 @@ no fixed release, and SitesPanel needs a database tool whose image passes its vu
 |---|---|---|
 | `6.3.0`, `latest` | 6.3.0 | `adminer:6.3.0-standalone` |
 
-## Licence
-
-The build files in this repository are MIT ([LICENSE](LICENSE)). Adminer is
-"Apache License 2.0 or GPL 2.0" ([ADMINER-LICENSE](ADMINER-LICENSE), also in the image at
-`/licenses/adminer-LICENSE`).
-
 ## Publishing
 
-A push to `master` that changes the Dockerfile builds the image, pushes it to
-`morsalin1342/adminer` and `easydigital/adminer`, fails on a fixable critical vulnerability and
-keeps an SBOM. See [SECURITY.md](SECURITY.md) for reporting a vulnerability.
+A push to `master` that changes the Dockerfile, and a weekly scheduled run, build the image and
+scan it with Trivy. A fixable critical vulnerability stops the run before anything is pushed;
+otherwise the image is pushed to `morsalin1342/adminer` and `easydigital/adminer` and an SPDX
+SBOM is kept as a workflow artifact. A pull request builds and scans but never pushes. See
+[SECURITY.md](SECURITY.md) for reporting a vulnerability.
+
+## Licence
+
+The files in this repository are MIT ([LICENSE](LICENSE)). That licence covers the build files,
+not the software in the image, which keeps its own licences:
+
+| Component | Licence |
+|---|---|
+| Adminer | "Apache License 2.0 or GPL 2.0" ([ADMINER-LICENSE](ADMINER-LICENSE), also in the image at `/licenses/adminer-LICENSE`) |
+| PHP, from the official image | PHP-3.01 (the PHP License) |
+| Alpine packages from the base image | their own licences |
+
+The SPDX SBOM each build writes, kept as an artifact of its workflow run, lists every package
+with the licence it declares.
+
+## Related Images & Tools
+
+<!-- BEGIN GENERATED: related (from manifest/images.yaml in the morsalin1342/.github repository; do not edit by hand) -->
+Every image is published under `morsalin1342` (personal) and `easydigital` (organization), from the same build.
+
+| Repository | Images | Description |
+|---|---|---|
+| [caddy-docker](https://github.com/morsalin1342/caddy-docker) | `morsalin1342/caddy` · `easydigital/caddy` | Standalone Caddy with WAF, rate limiting & caching |
+| [frankenphp-docker](https://github.com/morsalin1342/frankenphp-docker) | `morsalin1342/frankenphp` · `easydigital/frankenphp` | Caddy + PHP app server in one container |
+| [php-docker](https://github.com/morsalin1342/php-docker) | `morsalin1342/php` · `easydigital/php` | Traditional PHP-FPM & CLI images |
+| [nginx-docker](https://github.com/morsalin1342/nginx-docker) | `morsalin1342/nginx` · `easydigital/nginx` | nginx with ModSecurity 3, Brotli, zstd & GeoIP2 |
+| [apache-docker](https://github.com/morsalin1342/apache-docker) | `morsalin1342/apache` · `easydigital/apache` | Apache as a static server or php-fpm application server, no PHP inside |
+<!-- END GENERATED: related -->

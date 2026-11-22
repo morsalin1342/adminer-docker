@@ -8,6 +8,7 @@ on:
       - 'ADMINER-LICENSE'
       - 'README.md'
       - 'README.dockerhub.md'
+      - 'README.dockerhub-org.md'
       - 'LICENSE'
   # A pull request builds and scans the image. It never logs in and never pushes.
   pull_request:
@@ -146,5 +147,5 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
           repository: easydigital/adminer
-          readme-filepath: ./README.dockerhub.md
+          readme-filepath: ./README.dockerhub-org.md
           short-description: 'Adminer database tool: the official image with Alpine security updates'
