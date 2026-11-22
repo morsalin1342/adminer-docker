@@ -24,8 +24,8 @@ the entrypoint is out of scope; a plugin or theme belongs in your own image buil
    then open <http://127.0.0.1:8080> and sign in to a test database
 4. Open a PR against `master` with a clear description
 
-Every pull request that touches the `Dockerfile` or the workflow builds the image and scans it
-with Trivy; nothing is pushed from a pull request.
+Every pull request that touches the `Dockerfile`, `.trivyignore`, `ADMINER-LICENSE` or the
+publish workflow builds the image and scans it with Trivy; nothing is pushed from a pull request.
 
 ## Project Structure
 

@@ -35,12 +35,16 @@ stops the push (see [Publishing](#publishing)).
 
 ## Publishing
 
-A push to `master` that changes the Dockerfile, and a weekly scheduled run, build the image and
+A push to `master` that changes the `Dockerfile`, `.trivyignore`, `ADMINER-LICENSE`, `LICENSE`
+or one of the three READMEs, a weekly scheduled run and a manual run all build the image and
 scan it with Trivy. A fixable critical or high vulnerability stops the run before anything is
 pushed (a waiver, with its reason and expiry date, goes in [.trivyignore](.trivyignore));
-otherwise the image is pushed to `morsalin1342/adminer` and `easydigital/adminer` and an SPDX
-SBOM is kept as a workflow artifact. A pull request builds and scans but never pushes. See
-[SECURITY.md](SECURITY.md) for reporting a vulnerability.
+otherwise the image is pushed to `morsalin1342/adminer` and `easydigital/adminer`, and the
+Docker Hub descriptions are updated from `README.dockerhub.md` and `README.dockerhub-org.md`.
+Every build that completes keeps an SPDX SBOM as a workflow artifact, whether or not its scan
+passed. A pull request that changes the `Dockerfile`, `.trivyignore`, `ADMINER-LICENSE` or the
+publish workflow builds and scans but never pushes. See [SECURITY.md](SECURITY.md) for
+reporting a vulnerability.
 
 ## Licence
 
