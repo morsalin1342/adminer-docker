@@ -33,7 +33,9 @@ publish workflow builds the image and scans it with Trivy; nothing is pushed fro
 .
 ├── Dockerfile                 # The official image plus apk upgrade
 ├── ADMINER-LICENSE            # Adminer's licence, copied into the image
-├── .github/workflows/         # Build, scan and publish; docs consistency check
+├── .trivyignore               # Trivy waivers (ID, reason, expiry); empty for now
+├── scripts/check-upstream.sh  # Compares the pinned Adminer version and digest with upstream
+├── .github/workflows/         # Build, scan and publish; weekly upstream check; docs consistency check
 ├── README.md                  # GitHub README
 ├── README.dockerhub.md        # Personal Docker Hub description
 └── README.dockerhub-org.md    # Org Docker Hub description
@@ -41,7 +43,10 @@ publish workflow builds the image and scans it with Trivy; nothing is pushed fro
 
 ## Version Upgrades
 
-To move to a new Adminer release:
+The weekly Upstream check workflow (`scripts/check-upstream.sh`, which you can also run
+locally) fails when Adminer has a newer release than the pinned one or when the pinned official
+image tag has a new digest. To move to a new Adminer release, once the official image has its
+`<version>-standalone` tag:
 1. Update `ADMINER_VERSION` and the digest in the `FROM` line of the `Dockerfile` together
    (`docker buildx imagetools inspect adminer:<version>-standalone` prints the digest)
 2. Check that Adminer's licence has not changed, and update `ADMINER-LICENSE` if it has
