@@ -9,14 +9,25 @@ on:
       - 'README.md'
       - 'README.dockerhub.md'
       - 'LICENSE'
+  # A pull request builds and scans the image. It never logs in and never pushes.
+  pull_request:
+    paths:
+      - 'Dockerfile'
+      - 'ADMINER-LICENSE'
+      - '.github/workflows/docker-publish.yml'
+  # Weekly rebuild, so Alpine security updates and a moved base image reach the
+  # published tags without waiting for a commit. It writes the same tags as a push.
+  schedule:
+    - cron: '23 3 * * 1'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
     if: github.repository == 'morsalin1342/adminer-docker'
-    permissions:
-      contents: read
     steps:
       - name: Check out the repo
         uses: actions/checkout@v7
@@ -26,22 +37,66 @@ jobs:
         run: |
           VERSION=$(grep -oP '^ARG ADMINER_VERSION=\K[0-9]+\.[0-9]+\.[0-9]+' Dockerfile | head -n 1)
           if [ -z "$VERSION" ]; then
-            echo "Could not extract the version from the Dockerfile."
+            echo "Could not extract version from Dockerfile."
             exit 1
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      # Build into the runner's Docker daemon only. Nothing leaves the runner until
+      # the scan below has passed.
+      - name: Build the image locally
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          push: false
+          tags: local/adminer:scan
+          # Enable GHA caching for faster builds.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # A fixable critical vulnerability fails the run before anything is pushed.
+      - name: Scan the image for fixable critical vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: local/adminer:scan
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Write the SBOM
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: local/adminer:scan
+          format: spdx-json
+          output: sbom.spdx.json
+          exit-code: '0'
+
+      - name: Keep the SBOM
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: sbom-adminer-${{ steps.get_version.outputs.version }}
+          path: sbom.spdx.json
+
       - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      - name: Build and push the Docker image
-        id: build-and-push
+      # Same context and inputs as the local build on the same builder, so every
+      # layer comes from that build's cache: what is pushed is what was scanned.
+      # One build writes every tag, so both namespaces get the same digest.
+      - name: Push the scanned image
+        if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -52,44 +107,31 @@ jobs:
             easydigital/adminer:${{ steps.get_version.outputs.version }}
             easydigital/adminer:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      # After the push, a fixable critical vulnerability fails the run, and an SPDX SBOM is kept
-      # as a workflow artifact. SitesPanel's image manifest scans again before it lists the image.
-      - name: Scan the pushed image for fixable critical vulnerabilities
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: easydigital/adminer:${{ steps.get_version.outputs.version }}
-          format: table
-          severity: CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
-
-      - name: Write the SBOM
-        if: always()
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: easydigital/adminer:${{ steps.get_version.outputs.version }}
-          format: spdx-json
-          output: sbom.spdx.json
-          exit-code: '0'
-
-      - name: Keep the SBOM
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: sbom-adminer-${{ steps.get_version.outputs.version }}
-          path: sbom.spdx.json
+      - name: Check the pushed layers are the scanned layers
+        if: github.event_name != 'pull_request'
+        env:
+          PUSHED: easydigital/adminer:${{ steps.get_version.outputs.version }}
+        run: |
+          scanned=$(docker image inspect local/adminer:scan --format '{{json .RootFS.Layers}}' | jq -c .)
+          pushed=$(docker buildx imagetools inspect "$PUSHED" --format '{{json .Image.RootFS.DiffIDs}}' | jq -c .)
+          if [ "$scanned" != "$pushed" ]; then
+            echo "::error::The pushed image's layers differ from the scanned image's layers."
+            echo "scanned: $scanned"
+            echo "pushed:  $pushed"
+            exit 1
+          fi
 
   update_readme:
+    # This job runs only after build_and_publish has succeeded, and never for a pull request.
     needs: build_and_publish
     runs-on: ubuntu-latest
-    if: github.repository == 'morsalin1342/adminer-docker'
+    if: github.repository == 'morsalin1342/adminer-docker' && github.event_name != 'pull_request'
     steps:
       - name: Check out the repo
         uses: actions/checkout@v7
 
-      - name: Update the Docker Hub description (personal repo)
+      - name: Update Docker Hub description (personal repo)
         uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
@@ -98,7 +140,7 @@ jobs:
           readme-filepath: ./README.dockerhub.md
           short-description: 'Adminer database tool: the official image with Alpine security updates'
 
-      - name: Update the Docker Hub description (org repo)
+      - name: Update Docker Hub description (org repo)
         uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
