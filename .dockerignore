@@ -1,0 +1,5 @@
+# The build reads only the Dockerfile and ADMINER-LICENSE. Everything else stays
+# out of the build context.
+*
+!Dockerfile
+!ADMINER-LICENSE
